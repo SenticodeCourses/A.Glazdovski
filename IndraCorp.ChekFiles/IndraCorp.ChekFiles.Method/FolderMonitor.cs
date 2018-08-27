@@ -7,47 +7,79 @@ using System.IO;
 
 namespace IndraCorp.ChekFiles.Method
 {
+
     public class FolderMonitor
     {
-        private string _path;
-        bool _isMonitoring;
-        private Dictionary<string, bool> _latestFolderState = new Dictionary<string, bool>();
-        private Dictionary<string, bool> _previouseFolderState = new Dictionary<string, bool>();
+        List<string> folderMonitorDirectoriesList = new List<string>();
+        string currentMonitoringFolder="";
 
-        FolderMonitor (string path)
+        public void AddNewFolderToList()
         {
-            if (path == null) throw new ArgumentNullException();
-            if (!Directory.Exists(path)) throw new DirectoryNotFoundException();
-            _path = path;
-        }
-
-        public void Monitoring()
-        {
-            if (!_isMonitoring) _isMonitoring = true;
-        }
-        public void FindChanges()
-        {
-            
-        }
-
-        public Dictionary<string, bool> SaveFolderState()
-        {
-            return Directory.EnumerateDirectories(_path).ToDictionary(i => i, i=> false);
-        }
-
-        public void CheckAddFile()
-        {
-            foreach (var s in _previouseFolderState)
+            Console.WriteLine("Input path:");
+            var newPath = Console.ReadLine().Trim('/');
+            if (Directory.Exists(newPath))
             {
-                if (_previouseFolderState)
+                if (folderMonitorDirectoriesList.Contains(newPath))
+                {
+                    Console.WriteLine("This folder allready in list.");
+                }
+                else
+                {
+                    folderMonitorDirectoriesList.Add(newPath);
+                    if (currentMonitoringFolder == "") currentMonitoringFolder = newPath;
+                }
             }
+            else
+            {
+                Console.WriteLine("Incorrect path.");
+            }
+            Console.WriteLine("Press Enter.");
+            Console.ReadLine();
         }
 
-        public void CheckDeleteFile()
+        public void ChooseMonitoredFolder()
         {
-
+            int folderNumber = choosenFolderId();
+            if (folderNumber > -1) currentMonitoringFolder = folderMonitorDirectoriesList[folderNumber];
+            Console.WriteLine("Press Enter.");
+            Console.ReadLine();
         }
 
+        public void DeleteChoosenFolder()
+        {
+            int folderNumber = choosenFolderId();
+            if (folderNumber > -1) folderMonitorDirectoriesList.RemoveAt(folderNumber);
+            Console.WriteLine("Press Enter.");
+            Console.ReadLine();
+        }
 
+        int choosenFolderId()
+        {
+            int folderNumber = - 1;
+            if (folderMonitorDirectoriesList.Count > 0)
+            {
+                for (int i = 0; i < folderMonitorDirectoriesList.Count; i++)
+                {
+                    Console.WriteLine(i + 1 + " " + folderMonitorDirectoriesList[i]);
+                }
+                Console.WriteLine("\nInput the number of the folder.");
+                try
+                {
+                    folderNumber = Convert.ToInt32(Console.ReadLine());
+                    if (folderNumber < 1 || folderNumber > folderMonitorDirectoriesList.Count)
+                    {
+                        Console.WriteLine("Wrong number.");
+                        return -1;
+                    }
+                    return folderNumber - 1;
+                }
+                catch
+                {
+                    Console.WriteLine("Wrong number.");
+                }
+            }
+            else Console.WriteLine("List is empty.");
+            return folderNumber - 1;
+        }
     }
 }
