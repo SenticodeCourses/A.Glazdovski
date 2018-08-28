@@ -25,6 +25,7 @@ namespace IndraCorp.ChekFiles.App
                 controlString = Console.ReadLine();
 
                 if (controlString == "1") folderMonitor.AddNewFolderToList();
+                if (controlString == "2") folderMonitor.GetFolderCondition();
                 if (controlString == "4") folderMonitor.ChooseMonitoredFolder();
                 if (controlString == "5") folderMonitor.DeleteChoosenFolder();
 

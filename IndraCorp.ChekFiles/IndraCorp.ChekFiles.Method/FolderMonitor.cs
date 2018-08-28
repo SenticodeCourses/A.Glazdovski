@@ -10,6 +10,8 @@ namespace IndraCorp.ChekFiles.Method
 
     public class FolderMonitor
     {
+        Dictionary<string, List<string>> previousFolderCondition = new Dictionary<string, List<string>>();
+        Dictionary<string, List<string>> currentFolderCondition = new Dictionary<string, List<string>>();
         List<string> folderMonitorDirectoriesList = new List<string>();
         string currentMonitoringFolder="";
 
@@ -39,7 +41,7 @@ namespace IndraCorp.ChekFiles.Method
 
         public void ChooseMonitoredFolder()
         {
-            int folderNumber = choosenFolderId();
+            int folderNumber = ChoosenFolderId();
             if (folderNumber > -1) currentMonitoringFolder = folderMonitorDirectoriesList[folderNumber];
             Console.WriteLine("Press Enter.");
             Console.ReadLine();
@@ -47,13 +49,13 @@ namespace IndraCorp.ChekFiles.Method
 
         public void DeleteChoosenFolder()
         {
-            int folderNumber = choosenFolderId();
+            int folderNumber = ChoosenFolderId();
             if (folderNumber > -1) folderMonitorDirectoriesList.RemoveAt(folderNumber);
             Console.WriteLine("Press Enter.");
             Console.ReadLine();
         }
 
-        int choosenFolderId()
+        int ChoosenFolderId()
         {
             int folderNumber = - 1;
             if (folderMonitorDirectoriesList.Count > 0)
@@ -80,6 +82,16 @@ namespace IndraCorp.ChekFiles.Method
             }
             else Console.WriteLine("List is empty.");
             return folderNumber - 1;
+        }
+
+        public void GetFolderCondition()
+        {
+            currentFolderCondition =
+                Directory.EnumerateDirectories(currentMonitoringFolder, "*.*", SearchOption.AllDirectories)
+                .ToDictionary(i => i, i => Directory.EnumerateFiles(i)
+                    .ToList());
+            currentFolderCondition.Add(currentMonitoringFolder,
+                Directory.EnumerateFiles(currentMonitoringFolder).ToList());
         }
     }
 }
