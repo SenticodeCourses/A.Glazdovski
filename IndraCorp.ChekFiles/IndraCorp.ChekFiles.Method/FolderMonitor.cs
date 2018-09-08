@@ -5,16 +5,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using Newtonsoft.Json;
 
 namespace IndraCorp.ChekFiles.Method
 {
 
     public class FolderMonitor
     {
-        CheckFileUtilityDictionary previousFolderCondition = new CheckFileUtilityDictionary();
-        CheckFileUtilityDictionary currentFolderCondition = new CheckFileUtilityDictionary();
-        List<string> folderMonitorDirectoriesList = new List<string>();
-        string currentMonitoringFolder="";
+        public Dictionary<string, List<string>> _previousFolderCondition = new Dictionary<string, List<string>>();
+        public Dictionary<string, List<string>> _currentFolderCondition = new Dictionary<string, List<string>>();
+        List<string> _folderMonitorDirectoriesList = new List<string>();
+        string _currentMonitoringFolder="";
 
         public void AddNewFolderToList()
         {
@@ -22,14 +23,14 @@ namespace IndraCorp.ChekFiles.Method
             var newPath = Console.ReadLine().Trim('/');
             if (Directory.Exists(newPath))
             {
-                if (folderMonitorDirectoriesList.Contains(newPath))
+                if (_folderMonitorDirectoriesList.Contains(newPath))
                 {
                     Console.WriteLine("This folder allready in list.");
                 }
                 else
                 {
-                    folderMonitorDirectoriesList.Add(newPath);
-                    if (currentMonitoringFolder == "") currentMonitoringFolder = newPath;
+                    _folderMonitorDirectoriesList.Add(newPath);
+                    if (_currentMonitoringFolder == "") _currentMonitoringFolder = newPath;
                 }
             }
             else
@@ -44,7 +45,7 @@ namespace IndraCorp.ChekFiles.Method
             int folderNumber = ChoosenFolderId();
             if (folderNumber > -1)
             {
-                currentMonitoringFolder = folderMonitorDirectoriesList[folderNumber];
+                _currentMonitoringFolder = _folderMonitorDirectoriesList[folderNumber];
                 GetFolderCondition();
             }
             PressEnter();
@@ -55,8 +56,8 @@ namespace IndraCorp.ChekFiles.Method
             int folderNumber = ChoosenFolderId();
             if (folderNumber > -1)
             {
-                folderMonitorDirectoriesList.RemoveAt(folderNumber);
-                currentMonitoringFolder = "";
+                _folderMonitorDirectoriesList.RemoveAt(folderNumber);
+                _currentMonitoringFolder = "";
             }
             PressEnter();
         }
@@ -64,12 +65,15 @@ namespace IndraCorp.ChekFiles.Method
         public void SaveCurrentFolderStatus()
         {
             GetFolderCondition();
-            BinaryFormatter binaryFormatter= new BinaryFormatter();
-            using (FileStream fileStream = 
-                new FileStream($@"{currentMonitoringFolder}\foldercheckutility.dat", FileMode.Create))
-            {
-                binaryFormatter.Serialize(fileStream, currentFolderCondition);
-            }
+            //BinaryFormatter binaryFormatter= new BinaryFormatter();
+            //using (FileStream fileStream = 
+            //    new FileStream($@"{_currentMonitoringFolder}\foldercheckutility.dat", FileMode.Create))
+            //{
+            //    binaryFormatter.Serialize(fileStream, _currentFolderCondition);
+            //}
+            string Json_currentMonitoringFolder = JsonConvert.SerializeObject(_currentFolderCondition, Formatting.Indented);
+            File.WriteAllText($@"{_currentMonitoringFolder}\foldercheckutility.dat", Json_currentMonitoringFolder);
+
             Console.WriteLine("Save complite.");
             PressEnter();
         }
@@ -77,7 +81,7 @@ namespace IndraCorp.ChekFiles.Method
         public void ListCurrentDirectory()
         {
             GetFolderCondition();
-            ListDictionary(currentFolderCondition);
+            ListDictionary(_currentFolderCondition);
         }
 
         public void ChangesList()
@@ -85,8 +89,8 @@ namespace IndraCorp.ChekFiles.Method
             GetFolderCondition();
             LoadCurrentDirectoryPreviousStatus();
             Console.WriteLine("New Folders:");
-            var prevDirList = previousFolderCondition.dict.Keys;
-            var currentDirList = currentFolderCondition.dict.Keys;
+            var prevDirList = _previousFolderCondition.Keys;
+            var currentDirList = _currentFolderCondition.Keys;
             var createdDirList = currentDirList.Except(prevDirList).ToList();
             foreach (string str in createdDirList) Console.WriteLine(str);
             PressEnter();
@@ -106,37 +110,49 @@ namespace IndraCorp.ChekFiles.Method
             PressEnter();
         }
 
-        void ListDictionary(CheckFileUtilityDictionary dictionary)
+        void ListDictionary(Dictionary<string, List<string>> dictionary)
         {
-            foreach (var i in dictionary.dict.Keys)
-                foreach (var ii in dictionary.dict[i]) Console.WriteLine(ii);
+            foreach (var i in dictionary.Keys)
+                foreach (var ii in dictionary[i]) Console.WriteLine(ii);
             PressEnter();
         }
 
         void LoadCurrentDirectoryPreviousStatus()
         {
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            using (FileStream fileStream =
-                new FileStream($@"{currentMonitoringFolder}\foldercheckutility.dat", FileMode.Open))
+            if (File.Exists($@"{_currentMonitoringFolder}\foldercheckutility.dat"))
             {
-                previousFolderCondition = (CheckFileUtilityDictionary)binaryFormatter.Deserialize(fileStream);
+                //BinaryFormatter binaryFormatter = new BinaryFormatter();
+                //using (FileStream fileStream =
+                //    new FileStream($@"{_currentMonitoringFolder}\foldercheckutility.dat", FileMode.Open))
+                //{
+                //    _previousFolderCondition = (CheckFileUtilityDictionary)binaryFormatter.Deserialize(fileStream);
+                //}
+                string JsonString;
+                JsonString = File.ReadAllText($@"{_currentMonitoringFolder}\foldercheckutility.dat");
+                _previousFolderCondition = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(JsonString);
+
+            }
+            else
+            {
+                Console.WriteLine("File not exists");
+                PressEnter();
             }
         }
 
         int ChoosenFolderId()
         {
             int folderNumber = - 1;
-            if (folderMonitorDirectoriesList.Count > 0)
+            if (_folderMonitorDirectoriesList.Count > 0)
             {
-                for (int i = 0; i < folderMonitorDirectoriesList.Count; i++)
+                for (int i = 0; i < _folderMonitorDirectoriesList.Count; i++)
                 {
-                    Console.WriteLine(i + 1 + " " + folderMonitorDirectoriesList[i]);
+                    Console.WriteLine(i + 1 + " " + _folderMonitorDirectoriesList[i]);
                 }
                 Console.WriteLine("\nInput the number of the folder.");
                 try
                 {
                     folderNumber = Convert.ToInt32(Console.ReadLine());
-                    if (folderNumber < 1 || folderNumber > folderMonitorDirectoriesList.Count)
+                    if (folderNumber < 1 || folderNumber > _folderMonitorDirectoriesList.Count)
                     {
                         Console.WriteLine("Wrong number.");
                         return -1;
@@ -154,12 +170,12 @@ namespace IndraCorp.ChekFiles.Method
 
         void GetFolderCondition()
         {
-            currentFolderCondition.dict =
-                Directory.EnumerateDirectories(currentMonitoringFolder, "*.*", SearchOption.AllDirectories)
+            _currentFolderCondition =
+                Directory.EnumerateDirectories(_currentMonitoringFolder, "*.*", SearchOption.AllDirectories)
                 .ToDictionary(i => i, i => Directory.EnumerateFiles(i)
                     .ToList());
-            currentFolderCondition.dict.Add(currentMonitoringFolder,
-                Directory.EnumerateFiles(currentMonitoringFolder).ToList());
+            _currentFolderCondition.Add(_currentMonitoringFolder,
+                Directory.EnumerateFiles(_currentMonitoringFolder).ToList());
         }
 
         void PressEnter()
@@ -171,8 +187,8 @@ namespace IndraCorp.ChekFiles.Method
         List<string> createListOfAllPreviousFiles()
         {
             List<string> retString = new List<string>();
-            foreach (var i in previousFolderCondition.dict.Keys)
-                foreach (var ii in previousFolderCondition.dict[i])
+            foreach (var i in _previousFolderCondition.Keys)
+                foreach (var ii in _previousFolderCondition[i])
                     retString.Add(ii);
             return retString;
         }
@@ -180,15 +196,10 @@ namespace IndraCorp.ChekFiles.Method
         List<string> createListOfAllCurrentFiles()
         {
             List<string> retString = new List<string>();
-            foreach (var i in currentFolderCondition.dict.Keys)
-                foreach (var ii in currentFolderCondition.dict[i])
+            foreach (var i in _currentFolderCondition.Keys)
+                foreach (var ii in _currentFolderCondition[i])
                     retString.Add(ii);
             return retString;
         }
-
-        //List<string> ListUnion (List<string> str1, List<string> str2)
-        //{
-        //    return str1.Union(str2).ToList();
-        //}
     }
 }
